@@ -8,18 +8,6 @@ from streamlit_folium import folium_static
 from folium import CustomIcon
 from shapely.geometry import Point, Polygon
 
-# Set page configuration
-st.set_page_config(layout="wide")
-
-# Initialize session state for location and selected tab
-if 'user_lat' not in st.session_state:
-    st.session_state['user_lat'] = None
-if 'user_lon' not in st.session_state:
-    st.session_state['user_lon'] = None
-if 'current_tab' not in st.session_state:
-    st.session_state['current_tab'] = None
-
-# Function to get user location
 def get_user_location():
     loc_button = Button(label="Get Location")
     loc_button.js_on_event("button_click", CustomJS(code="""
@@ -37,13 +25,32 @@ def get_user_location():
         override_height=75,
         debounce_time=0)
 
+    st.write("Debug - Result:", result)  # Debug information to see the result
+    
     if result:
         if "GET_LOCATION" in result:
             st.session_state['user_lat'] = result['GET_LOCATION']['lat']
             st.session_state['user_lon'] = result['GET_LOCATION']['lon']
             st.write(f"Current location: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
+        else:
+            st.warning("Location data not found in result.")
+    else:
+        st.warning("Failed to retrieve location.")
 
 get_user_location()
+
+
+# Set page configuration
+st.set_page_config(layout="wide")
+
+# Initialize session state for location and selected tab
+if 'user_lat' not in st.session_state:
+    st.session_state['user_lat'] = None
+if 'user_lon' not in st.session_state:
+    st.session_state['user_lon'] = None
+if 'current_tab' not in st.session_state:
+    st.session_state['current_tab'] = None
+
 
 # Function to check if a point is within a polygon
 def is_within_bounds(lat, lon, bounds):
