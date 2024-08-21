@@ -39,15 +39,18 @@ def get_user_location():
 
     st.write("Debug - Result:", result)  # Debug information to see the result
     
-    if result:
-        if "GET_LOCATION" in result:
-            st.session_state['user_lat'] = result['GET_LOCATION']['lat']
-            st.session_state['user_lon'] = result['GET_LOCATION']['lon']
-            st.write(f"Current location: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
-        else:
-            st.warning("Location data not found in result.")
+    if result and "GET_LOCATION" in result:
+        st.session_state['user_lat'] = result['GET_LOCATION']['lat']
+        st.session_state['user_lon'] = result['GET_LOCATION']['lon']
+        st.write(f"Current location: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
     else:
-        st.warning("Failed to retrieve location.")
+        st.warning("Failed to retrieve location. Please enter your location manually below.")
+        manual_lat = st.number_input("Latitude", format="%.6f")
+        manual_lon = st.number_input("Longitude", format="%.6f")
+        if st.button("Set Manual Location"):
+            st.session_state['user_lat'] = manual_lat
+            st.session_state['user_lon'] = manual_lon
+            st.write(f"Manual location set: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
 
 get_user_location()
 
