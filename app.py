@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_js_eval import get_geolocation  # Import the get_geolocation function
+from streamlit_js_eval import get_geolocation
 import mygeotab
 import pandas as pd
 import folium
@@ -17,6 +17,10 @@ if 'user_lon' not in st.session_state:
 if 'current_tab' not in st.session_state:
     st.session_state['current_tab'] = None
 
+# Mapbox token and style
+mapbox_token = "pk.eyJ1IjoidnIwMG4tbnljc2J1cyIsImEiOiJjbDB5cHhoeHgxcmEyM2ptdXVkczk1M2xlIn0.qq6o-6TMurwke-t1eyetBw"
+mapbox_style = "mapbox://styles/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn"
+
 # Function to get user location using streamlit_js_eval
 def get_user_location():
     location = get_geolocation()
@@ -25,13 +29,7 @@ def get_user_location():
         st.session_state['user_lon'] = location['coords']['longitude']
         st.write(f"Current location: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
     else:
-        st.warning("Failed to retrieve location. Please enter your location manually below.")
-        manual_lat = st.number_input("Latitude", format="%.6f")
-        manual_lon = st.number_input("Longitude", format="%.6f")
-        if st.button("Set Manual Location"):
-            st.session_state['user_lat'] = manual_lat
-            st.session_state['user_lon'] = manual_lon
-            st.write(f"Manual location set: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
+        st.warning("Unable to get your location.")
 
 get_user_location()
 
@@ -68,12 +66,21 @@ def switch_to_nearest_tab():
 
 switch_to_nearest_tab()
 
+# Function to clean and normalize the vehicle name
+def clean_vehicle_name(vehicle_name):
+    vehicle_name = vehicle_name.upper().strip()
+    if not vehicle_name.startswith("NT"):
+        vehicle_name = "NT" + vehicle_name
+    return vehicle_name
+
 # Function to display bus location on a map
 def display_bus_location():
     vehicle_name = st.text_input("Enter Vehicle ID", placeholder="Vehicle ID")
     
     if st.button("Show Bus Location"):
         if vehicle_name:
+            vehicle_name = clean_vehicle_name(vehicle_name)
+            
             # Authentication with Geotab
             database = 'nycsbus'
             server = 'afmfe.att.com'
@@ -111,13 +118,25 @@ def display_bus_location():
 
                 if device_statuses:
                     device_status = device_statuses[0]
-                    lat = device_status.get('latitude', None)
-                    lon = device_status.get('longitude', None)
+                    bus_lat = device_status.get('latitude', None)
+                    bus_lon = device_status.get('longitude', None)
                     vehicle_name = device_status.get('device', {}).get('name', 'Unknown Vehicle')
 
-                    if lat and lon:
-                        m = folium.Map(location=[lat, lon], zoom_start=15)
-                        folium.Marker([lat, lon], popup=f'{vehicle_name}').add_to(m)
+                    if bus_lat and bus_lon:
+                        # Initialize the map with user's location or bus location
+                        map_center = [bus_lat, bus_lon]
+                        if st.session_state['user_lat'] and st.session_state['user_lon']:
+                            map_center = [(bus_lat + st.session_state['user_lat']) / 2, (bus_lon + st.session_state['user_lon']) / 2]
+
+                        m = folium.Map(location=map_center, zoom_start=15, tiles=f"https://api.mapbox.com/styles/v1/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={mapbox_token}", attr="Mapbox")
+
+                        # Add bus marker
+                        folium.Marker([bus_lat, bus_lon], popup=f'{vehicle_name}', icon=folium.Icon(color='red', icon='bus', prefix='fa')).add_to(m)
+
+                        # Add user location marker if available
+                        if st.session_state['user_lat'] and st.session_state['user_lon']:
+                            folium.Marker([st.session_state['user_lat'], st.session_state['user_lon']], popup='Your Location', icon=folium.Icon(color='blue', icon='user', prefix='fa')).add_to(m)
+
                         folium_static(m)
                     else:
                         st.error("Bus location not available.")
