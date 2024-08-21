@@ -118,7 +118,7 @@ def display_bus_location():
                         if st.session_state['user_lat'] and st.session_state['user_lon']:
                             map_center = [(bus_lat + st.session_state['user_lat']) / 2, (bus_lon + st.session_state['user_lon']) / 2]
 
-                        m = folium.Map(location=map_center, zoom_start=6, tiles=f"https://api.mapbox.com/styles/v1/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={mapbox_token}", attr="Mapbox")
+                        m = folium.Map(location=map_center, zoom_start=16, tiles=f"https://api.mapbox.com/styles/v1/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={mapbox_token}", attr="Mapbox")
 
                         # Add bus marker
                         folium.Marker([bus_lat, bus_lon], popup=f'{vehicle_name}', icon=folium.Icon(color='red', icon='bus', prefix='fa')).add_to(m)
