@@ -8,6 +8,7 @@ from shapely.geometry import Point, Polygon
 # Set page configuration - This should be the first Streamlit command
 st.set_page_config(layout="wide")
 
+
 # Initialize session state for location and selected tab
 if 'user_lat' not in st.session_state:
     st.session_state['user_lat'] = None
@@ -15,6 +16,29 @@ if 'user_lon' not in st.session_state:
     st.session_state['user_lon'] = None
 if 'current_tab' not in st.session_state:
     st.session_state['current_tab'] = None
+
+# Authentication with Geotab
+database = 'nycsbus'
+server = 'afmfe.att.com'
+geotab_username = st.secrets["geotab_username"]
+geotab_password = st.secrets["geotab_password"]
+api = mygeotab.API(username=geotab_username, password=geotab_password, database=database, server=server)
+
+try:
+    api.authenticate()
+    st.write("Successfully authenticated with Geotab.")
+
+    # List all devices
+    devices = api.get('Device')
+    st.write("List of devices:", devices)
+
+    # Optionally, you can filter devices based on some criteria to narrow down
+    filtered_devices = [device for device in devices if '1733' in device['name']]
+    st.write("Filtered devices (by ID or name containing '1733'):", filtered_devices)
+
+except mygeotab.exceptions.AuthenticationException:
+    st.error("Authentication failed!")
+
 
 # Function to get user location using streamlit_js_eval
 def get_user_location():
@@ -117,3 +141,4 @@ if st.session_state['current_tab']:
     display_bus_location()
 else:
     st.warning("Unable to determine your location.")
+
