@@ -21,6 +21,16 @@ if 'current_tab' not in st.session_state:
 mapbox_token = "pk.eyJ1IjoidnIwMG4tbnljc2J1cyIsImEiOiJjbDB5cHhoeHgxcmEyM2ptdXVkczk1M2xlIn0.qq6o-6TMurwke-t1eyetBw"
 mapbox_style = "mapbox://styles/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn"
 
+# Load and display the logo
+logo_path = "nycsbus-small-logo.png"
+
+# Display the logo and the title at the top
+col1, col2 = st.columns([0.8, 0.2])
+with col1:
+    st.title("Find my Bus (Depot)")
+with col2:
+    st.image(logo_path, use_column_width=True)
+
 # Function to get user location using streamlit_js_eval
 def get_user_location():
     location = get_geolocation()
@@ -39,7 +49,7 @@ def is_within_bounds(lat, lon, bounds):
     point = Point(lon, lat)
     return polygon.contains(point)
 
-# Define boundaries for Greenpoint and Zerega
+# Define boundaries for Greenpoint, Zerega, Conner, Jamaica, and Richmond Terrace depots
 greenpoint_bounds = [
     [-73.94226338858698, 40.72931657250524],
     [-73.94226338858698, 40.72698871645508],
@@ -54,6 +64,27 @@ zerega_bounds = [
     [-73.84929847524617, 40.829178521810235]
 ]
 
+conner_bounds = [
+    [-73.83038775843255, 40.88696837878996],
+    [-73.83038775843255, 40.88480162587726],
+    [-73.82786994700692, 40.88480162587726],
+    [-73.82786994700692, 40.88696837878996]
+]
+
+jamaica_bounds = [
+    [-73.77827652778593, 40.70321775639505],
+    [-73.77827652778593, 40.699744658752905],
+    [-73.77595909919668, 40.699744658752905],
+    [-73.77595909919668, 40.70321775639505]
+]
+
+richmond_terrace_bounds = [
+    [-74.13017255085087, 40.64051079380465],
+    [-74.13017255085087, 40.63795904666881],
+    [-74.12692989053916, 40.63795904666881],
+    [-74.12692989053916, 40.64051079380465]
+]
+
 # Function to switch to the appropriate tab based on user location
 def switch_to_nearest_tab():
     if st.session_state['user_lat'] and st.session_state['user_lon']:
@@ -61,6 +92,12 @@ def switch_to_nearest_tab():
             st.session_state['current_tab'] = 'Greenpoint'
         elif is_within_bounds(st.session_state['user_lat'], st.session_state['user_lon'], zerega_bounds):
             st.session_state['current_tab'] = 'Zerega'
+        elif is_within_bounds(st.session_state['user_lat'], st.session_state['user_lon'], conner_bounds):
+            st.session_state['current_tab'] = 'Conner'
+        elif is_within_bounds(st.session_state['user_lat'], st.session_state['user_lon'], jamaica_bounds):
+            st.session_state['current_tab'] = 'Jamaica'
+        elif is_within_bounds(st.session_state['user_lat'], st.session_state['user_lon'], richmond_terrace_bounds):
+            st.session_state['current_tab'] = 'Richmond Terrace'
         else:
             st.warning("You are not within any defined bus yard boundaries.")
 
@@ -115,15 +152,13 @@ def display_bus_location():
                     if bus_lat and bus_lon:
                         # Check if the bus is within the bounds of any depot
                         if (is_within_bounds(bus_lat, bus_lon, greenpoint_bounds) or 
-                            is_within_bounds(bus_lat, bus_lon, zerega_bounds)):
+                            is_within_bounds(bus_lat, bus_lon, zerega_bounds) or
+                            is_within_bounds(bus_lat, bus_lon, conner_bounds) or
+                            is_within_bounds(bus_lat, bus_lon, jamaica_bounds) or
+                            is_within_bounds(bus_lat, bus_lon, richmond_terrace_bounds)):
                             
-                            # Initialize the map with user's location or bus location
-                            map_center = [bus_lat, bus_lon]
-                            if st.session_state['user_lat'] and st.session_state['user_lon']:
-                                map_center = [(bus_lat + st.session_state['user_lat']) / 2, (bus_lon + st.session_state['user_lon']) / 2]
-
-                            m = folium.Map(location=[bus_lat, bus_lon], zoom_start=19, tiles=f"https://api.mapbox.com/styles/v1/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={mapbox_token}", attr="Mapbox")
-
+                            # Center the map on the bus location
+                            m = folium.Map(location=[bus_lat, bus_lon], zoom_start=6, tiles=f"https://api.mapbox.com/styles/v1/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={mapbox_token}", attr="Mapbox")
 
                             # Add bus marker
                             folium.Marker([bus_lat, bus_lon], popup=f'{vehicle_name}', icon=folium.Icon(color='red', icon='bus', prefix='fa')).add_to(m)
