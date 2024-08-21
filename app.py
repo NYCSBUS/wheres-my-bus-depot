@@ -1,13 +1,11 @@
 import streamlit as st
-from streamlit_js_eval import get_geolocation
 import mygeotab
 import folium
 from streamlit_folium import folium_static
 from shapely.geometry import Point, Polygon
 
-# Set page configuration - This should be the first Streamlit command
+# Set page configuration
 st.set_page_config(layout="wide")
-
 
 # Initialize session state for location and selected tab
 if 'user_lat' not in st.session_state:
@@ -16,29 +14,6 @@ if 'user_lon' not in st.session_state:
     st.session_state['user_lon'] = None
 if 'current_tab' not in st.session_state:
     st.session_state['current_tab'] = None
-
-# Authentication with Geotab
-database = 'nycsbus'
-server = 'afmfe.att.com'
-geotab_username = st.secrets["geotab_username"]
-geotab_password = st.secrets["geotab_password"]
-api = mygeotab.API(username=geotab_username, password=geotab_password, database=database, server=server)
-
-try:
-    api.authenticate()
-    st.write("Successfully authenticated with Geotab.")
-
-    # List all devices
-    devices = api.get('Device')
-    st.write("List of devices:", devices)
-
-    # Optionally, you can filter devices based on some criteria to narrow down
-    filtered_devices = [device for device in devices if '1733' in device['name']]
-    st.write("Filtered devices (by ID or name containing '1733'):", filtered_devices)
-
-except mygeotab.exceptions.AuthenticationException:
-    st.error("Authentication failed!")
-
 
 # Function to get user location using streamlit_js_eval
 def get_user_location():
@@ -93,10 +68,10 @@ switch_to_nearest_tab()
 
 # Function to display bus location on a map
 def display_bus_location():
-    vehicle_id = st.text_input("Enter Vehicle ID", placeholder="Vehicle ID")
+    vehicle_name = st.text_input("Enter Vehicle ID", placeholder="Vehicle ID")
     
     if st.button("Show Bus Location"):
-        if vehicle_id:
+        if vehicle_name:
             # Authentication with Geotab
             database = 'nycsbus'
             server = 'afmfe.att.com'
@@ -108,10 +83,26 @@ def display_bus_location():
                 api.authenticate()
                 st.write("Successfully authenticated with Geotab.")
                 
-                # Debugging: Show the vehicle ID being queried
-                st.write(f"Querying Geotab for vehicle ID: {vehicle_id}")
+                # Get all devices and map vehicle names to Geotab IDs
+                devices = api.get('Device')
+                df_id = pd.json_normalize(devices)[['name', 'id']]
+                df_id.columns = ["Vehicle", "ID"]
+                
+                # Debugging: Show the DataFrame of mapped IDs
+                st.write("Mapped Vehicle Names to Geotab IDs:", df_id)
+                
+                # Look up the internal Geotab ID based on the vehicle name provided by the user
+                geotab_id = df_id[df_id['Vehicle'] == vehicle_name]['ID'].values
+                if len(geotab_id) == 0:
+                    st.error(f"No Geotab ID found for vehicle '{vehicle_name}'.")
+                    return
+                geotab_id = geotab_id[0]
+                
+                # Debugging: Show the resolved Geotab ID
+                st.write(f"Resolved Geotab ID: {geotab_id}")
 
-                device_statuses = api.get('DeviceStatusInfo', search={'deviceSearch': {'id': vehicle_id}})
+                # Query Geotab for the device status using the internal ID
+                device_statuses = api.get('DeviceStatusInfo', search={'deviceSearch': {'id': geotab_id}})
                 
                 # Debugging: Show the API response
                 st.write("Geotab API response:", device_statuses)
@@ -141,4 +132,3 @@ if st.session_state['current_tab']:
     display_bus_location()
 else:
     st.warning("Unable to determine your location.")
-
