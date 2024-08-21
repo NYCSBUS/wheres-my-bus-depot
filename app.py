@@ -1,11 +1,8 @@
 import streamlit as st
-from bokeh.models.widgets import Button
-from bokeh.models import CustomJS
-from streamlit_bokeh_events import streamlit_bokeh_events
+from streamlit_js_eval import streamlit_js_eval, get_geolocation
 import mygeotab
 import folium
 from streamlit_folium import folium_static
-from folium import CustomIcon
 from shapely.geometry import Point, Polygon
 
 # Set page configuration - This should be the first Streamlit command
@@ -19,29 +16,12 @@ if 'user_lon' not in st.session_state:
 if 'current_tab' not in st.session_state:
     st.session_state['current_tab'] = None
 
-# Function to get user location
+# Function to get user location using streamlit_js_eval
 def get_user_location():
-    loc_button = Button(label="Get Location")
-    loc_button.js_on_event("button_click", CustomJS(code="""
-        navigator.geolocation.getCurrentPosition(
-            (loc) => {
-                document.dispatchEvent(new CustomEvent("GET_LOCATION", {detail: {lat: loc.coords.latitude, lon: loc.coords.longitude}}))
-            }
-        )
-        """))
-    result = streamlit_bokeh_events(
-        loc_button,
-        events="GET_LOCATION",
-        key="get_location",
-        refresh_on_update=False,
-        override_height=75,
-        debounce_time=0)
-
-    st.write("Debug - Result:", result)  # Debug information to see the result
-    
-    if result and "GET_LOCATION" in result:
-        st.session_state['user_lat'] = result['GET_LOCATION']['lat']
-        st.session_state['user_lon'] = result['GET_LOCATION']['lon']
+    location = get_geolocation()
+    if location:
+        st.session_state['user_lat'] = location['coords']['latitude']
+        st.session_state['user_lon'] = location['coords']['longitude']
         st.write(f"Current location: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
     else:
         st.warning("Failed to retrieve location. Please enter your location manually below.")
@@ -90,7 +70,6 @@ switch_to_nearest_tab()
 # Function to display bus location on a map
 def display_bus_location():
     vehicle_id = st.text_input("Enter Vehicle ID", placeholder="Vehicle ID")
-    
     if st.button("Show Bus Location"):
         if vehicle_id:
             # Authentication with Geotab
