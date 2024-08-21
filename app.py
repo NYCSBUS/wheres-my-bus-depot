@@ -1,5 +1,5 @@
 import streamlit as st
-from streamlit_js_eval import streamlit_js_eval, get_geolocation
+from streamlit_js_eval import get_geolocation
 import mygeotab
 import folium
 from streamlit_folium import folium_static
@@ -70,6 +70,7 @@ switch_to_nearest_tab()
 # Function to display bus location on a map
 def display_bus_location():
     vehicle_id = st.text_input("Enter Vehicle ID", placeholder="Vehicle ID")
+    
     if st.button("Show Bus Location"):
         if vehicle_id:
             # Authentication with Geotab
@@ -81,7 +82,16 @@ def display_bus_location():
 
             try:
                 api.authenticate()
+                st.write("Successfully authenticated with Geotab.")
+                
+                # Debugging: Show the vehicle ID being queried
+                st.write(f"Querying Geotab for vehicle ID: {vehicle_id}")
+
                 device_statuses = api.get('DeviceStatusInfo', search={'deviceSearch': {'id': vehicle_id}})
+                
+                # Debugging: Show the API response
+                st.write("Geotab API response:", device_statuses)
+
                 if device_statuses:
                     device_status = device_statuses[0]
                     lat = device_status.get('latitude', None)
