@@ -4,3 +4,4 @@ mygeotab
 folium
 streamlit_folium
 shapely
+streamlit_js_eval
