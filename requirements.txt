@@ -1,3 +1,5 @@
 bokeh
 streamlit-bokeh-events
 mygeotab
+folium
+streamlit_folium
