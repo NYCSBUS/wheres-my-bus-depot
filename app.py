@@ -90,15 +90,11 @@ def display_bus_location():
 
             try:
                 api.authenticate()
-                st.write("Successfully authenticated with Geotab.")
                 
                 # Get all devices and map vehicle names to Geotab IDs
                 devices = api.get('Device')
                 df_id = pd.json_normalize(devices)[['name', 'id']]
                 df_id.columns = ["Vehicle", "ID"]
-                
-                # Debugging: Show the DataFrame of mapped IDs
-                st.write("Mapped Vehicle Names to Geotab IDs:", df_id)
                 
                 # Look up the internal Geotab ID based on the vehicle name provided by the user
                 geotab_id = df_id[df_id['Vehicle'] == vehicle_name]['ID'].values
@@ -106,15 +102,9 @@ def display_bus_location():
                     st.error(f"No Geotab ID found for vehicle '{vehicle_name}'.")
                     return
                 geotab_id = geotab_id[0]
-                
-                # Debugging: Show the resolved Geotab ID
-                st.write(f"Resolved Geotab ID: {geotab_id}")
 
                 # Query Geotab for the device status using the internal ID
                 device_statuses = api.get('DeviceStatusInfo', search={'deviceSearch': {'id': geotab_id}})
-                
-                # Debugging: Show the API response
-                st.write("Geotab API response:", device_statuses)
 
                 if device_statuses:
                     device_status = device_statuses[0]
@@ -128,7 +118,7 @@ def display_bus_location():
                         if st.session_state['user_lat'] and st.session_state['user_lon']:
                             map_center = [(bus_lat + st.session_state['user_lat']) / 2, (bus_lon + st.session_state['user_lon']) / 2]
 
-                        m = folium.Map(location=map_center, zoom_start=15, tiles=f"https://api.mapbox.com/styles/v1/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={mapbox_token}", attr="Mapbox")
+                        m = folium.Map(location=map_center, zoom_start=6, tiles=f"https://api.mapbox.com/styles/v1/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={mapbox_token}", attr="Mapbox")
 
                         # Add bus marker
                         folium.Marker([bus_lat, bus_lon], popup=f'{vehicle_name}', icon=folium.Icon(color='red', icon='bus', prefix='fa')).add_to(m)
@@ -137,7 +127,26 @@ def display_bus_location():
                         if st.session_state['user_lat'] and st.session_state['user_lon']:
                             folium.Marker([st.session_state['user_lat'], st.session_state['user_lon']], popup='Your Location', icon=folium.Icon(color='blue', icon='user', prefix='fa')).add_to(m)
 
-                        folium_static(m)
+                        # Set map to fill the container width
+                        st.markdown(
+                            """
+                            <style>
+                            [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+                                width: 350px;
+                            }
+                            [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
+                                width: 350px;
+                                margin-left: -350px;
+                            }
+                            [data-testid="stExpander"] > div {
+                                width: 100%;
+                            }
+                            </style>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                        folium_static(m, width=1400, height=600)
                     else:
                         st.error("Bus location not available.")
                 else:
