@@ -5,9 +5,8 @@ from streamlit_bokeh_events import streamlit_bokeh_events
 import mygeotab
 import folium
 from streamlit_folium import folium_static
-from folium.features import DivIcon
 from folium import CustomIcon
-import pandas as pd
+from shapely.geometry import Point, Polygon
 
 # Set page configuration
 st.set_page_config(layout="wide")
@@ -19,6 +18,8 @@ if 'user_lon' not in st.session_state:
     st.session_state['user_lon'] = None
 if 'current_tab' not in st.session_state:
     st.session_state['current_tab'] = None
+
+# Function to get user location
 def get_user_location():
     loc_button = Button(label="Get Location")
     loc_button.js_on_event("button_click", CustomJS(code="""
@@ -43,27 +44,30 @@ def get_user_location():
             st.write(f"Current location: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
 
 get_user_location()
+
+# Function to check if a point is within a polygon
+def is_within_bounds(lat, lon, bounds):
+    polygon = Polygon(bounds)
+    point = Point(lon, lat)
+    return polygon.contains(point)
+
+# Define boundaries for Greenpoint and Zerega
+greenpoint_bounds = [
+    [-73.94226338858698, 40.72931657250524],
+    [-73.94226338858698, 40.72698871645508],
+    [-73.93862947535852, 40.72698871645508],
+    [-73.93862947535852, 40.72931657250524]
+]
+
+zerega_bounds = [
+    [-73.84305114100036, 40.829178521810235],
+    [-73.84305114100036, 40.83253559646761],
+    [-73.84929847524617, 40.83253559646761],
+    [-73.84929847524617, 40.829178521810235]
+]
+
+# Function to switch to the appropriate tab based on user location
 def switch_to_nearest_tab():
-    greenpoint_bounds = [
-        [-73.94226338858698, 40.72931657250524],
-        [-73.94226338858698, 40.72698871645508],
-        [-73.93862947535852, 40.72698871645508],
-        [-73.93862947535852, 40.72931657250524]
-    ]
-    
-    zerega_bounds = [
-        [-73.84305114100036, 40.829178521810235],
-        [-73.84305114100036, 40.83253559646761],
-        [-73.84929847524617, 40.83253559646761],
-        [-73.84929847524617, 40.829178521810235]
-    ]
-    
-    def is_within_bounds(lat, lon, bounds):
-        from shapely.geometry import Point, Polygon
-        polygon = Polygon(bounds)
-        point = Point(lon, lat)
-        return polygon.contains(point)
-    
     if st.session_state['user_lat'] and st.session_state['user_lon']:
         if is_within_bounds(st.session_state['user_lat'], st.session_state['user_lon'], greenpoint_bounds):
             st.session_state['current_tab'] = 'Greenpoint'
@@ -73,6 +77,8 @@ def switch_to_nearest_tab():
             st.warning("You are not within any defined bus yard boundaries.")
 
 switch_to_nearest_tab()
+
+# Function to display bus location on a map
 def display_bus_location():
     vehicle_id = st.text_input("Enter Vehicle ID", placeholder="Vehicle ID")
     
@@ -107,7 +113,7 @@ def display_bus_location():
         else:
             st.error("Please enter a vehicle ID.")
 
-display_bus_location()
+# Show the appropriate tab content
 if st.session_state['current_tab']:
     st.header(f"You are in the {st.session_state['current_tab']} area")
     display_bus_location()
