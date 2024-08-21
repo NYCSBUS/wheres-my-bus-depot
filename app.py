@@ -118,7 +118,7 @@ def display_bus_location():
                         if st.session_state['user_lat'] and st.session_state['user_lon']:
                             map_center = [(bus_lat + st.session_state['user_lat']) / 2, (bus_lon + st.session_state['user_lon']) / 2]
 
-                        m = folium.Map(location=map_center, zoom_start=21, tiles=f"https://api.mapbox.com/styles/v1/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={mapbox_token}", attr="Mapbox")
+                        m = folium.Map(location=map_center, zoom_start=6, tiles=f"https://api.mapbox.com/styles/v1/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={mapbox_token}", attr="Mapbox")
 
                         # Add bus marker
                         folium.Marker([bus_lat, bus_lon], popup=f'{vehicle_name}', icon=folium.Icon(color='red', icon='bus', prefix='fa')).add_to(m)
@@ -127,26 +127,8 @@ def display_bus_location():
                         if st.session_state['user_lat'] and st.session_state['user_lon']:
                             folium.Marker([st.session_state['user_lat'], st.session_state['user_lon']], popup='Your Location', icon=folium.Icon(color='blue', icon='user', prefix='fa')).add_to(m)
 
-                        # Set map to fill the container width
-                        st.markdown(
-                            """
-                            <style>
-                            [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-                                width: 350px;
-                            }
-                            [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-                                width: 350px;
-                                margin-left: -350px;
-                            }
-                            [data-testid="stExpander"] > div {
-                                width: 100%;
-                            }
-                            </style>
-                            """,
-                            unsafe_allow_html=True,
-                        )
-
-                        folium_static(m, width=1400, height=600)
+                        # Optimize map for mobile view
+                        folium_static(m, width=350, height=500)
                     else:
                         st.error("Bus location not available.")
                 else:
