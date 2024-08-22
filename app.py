@@ -101,7 +101,7 @@ def switch_to_nearest_tab():
         else:
             st.warning("You are not within any defined bus yard boundaries.")
 
-switch_to_nearest_tab()
+#switch_to_nearest_tab()
 
 # Function to clean and normalize the vehicle name
 def clean_vehicle_name(vehicle_name):
