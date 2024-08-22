@@ -31,8 +31,8 @@ with col1:
 with col2:
     st.logo(
     logo_path,
-    link="https://streamlit.io/gallery",
-    icon_image=LOGO_URL_SMALL,
+    link=None,
+    icon_image=logo_path,
 )
 
 # Function to get user location using streamlit_js_eval
