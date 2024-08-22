@@ -29,7 +29,7 @@ col1, col2 = st.columns([0.8, 0.2])
 with col1:
     st.title("Where's the Bus (Depot)")
 with col2:
-    st.image(logo_path, use_column_width=True)
+    st.image(logo_path, use_column_width=True,width=100)
 
 # Function to get user location using streamlit_js_eval
 def get_user_location():
