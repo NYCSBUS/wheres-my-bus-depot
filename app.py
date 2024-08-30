@@ -6,9 +6,6 @@ import folium
 from streamlit_folium import folium_static
 from shapely.geometry import Point, Polygon
 
-# Set page configuration
-st.set_page_config(layout="wide")
-
 # Initialize session state for location and selected tab
 if 'user_lat' not in st.session_state:
     st.session_state['user_lat'] = None
