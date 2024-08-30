@@ -150,6 +150,8 @@ def display_bus_location():
             api = mygeotab.API(username=st.secrets["geotab_username"], password=st.secrets["geotab_password"], database='nycsbus', server='afmfe.att.com')
             try:
                 device_statuses = api.get('DeviceStatusInfo', search={'deviceSearch': {'id': geotab_id}})
+                st.write(device_status)  # This will print the entire structure of device_status to help you debug
+
 
                 if device_statuses:
                     device_status = device_statuses[0]
