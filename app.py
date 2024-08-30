@@ -150,7 +150,6 @@ def display_bus_location():
             api = mygeotab.API(username=st.secrets["geotab_username"], password=st.secrets["geotab_password"], database='nycsbus', server='afmfe.att.com')
             try:
                 device_statuses = api.get('DeviceStatusInfo', search={'deviceSearch': {'id': geotab_id}})
-                st.write(device_status)  # This will print the entire structure of device_status to help you debug
 
 
                 if device_statuses:
@@ -158,6 +157,7 @@ def display_bus_location():
                     bus_lat = device_status.get('latitude', None)
                     bus_lon = device_status.get('longitude', None)
                     vehicle_name = device_status.get('device', {}).get('name', 'Unknown Vehicle')
+                    st.write(device_status)
 
                     if bus_lat and bus_lon:
                         # Check if the bus is within the bounds of any depot
