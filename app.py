@@ -41,9 +41,10 @@ def get_user_location():
     if location:
         st.session_state['user_lat'] = location['coords']['latitude']
         st.session_state['user_lon'] = location['coords']['longitude']
-        st.write(f"Current location: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
+        #st.write(f"Current location: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
     else:
-        st.warning("Unable to get your location.")
+        continue
+        #st.warning("Unable to get your location.")
 
 get_user_location()
 
