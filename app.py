@@ -124,7 +124,7 @@ def clean_vehicle_name(vehicle_name):
 
 # Function to display bus location on a map
 def display_bus_location():
-    vehicle_name = st.text_input("Enter Vehicle ID", placeholder="Vehicle ID")
+    vehicle_name = st.text_input("Please enter the four digit Bus ID.", placeholder="1234")
 
     if st.button("Show Bus Location"):
         if vehicle_name:
@@ -173,7 +173,7 @@ def display_bus_location():
                             # Optimize map for mobile view
                             folium_static(m, width=350, height=500)
                         else:
-                            st.error("The bus is not inside a depot. Cannot show location.")
+                            st.error("The bus is not currently inside a depot. For privacy reasons, we annot show it's location.")
                     else:
                         st.error("Bus location not available.")
                 else:
@@ -181,7 +181,7 @@ def display_bus_location():
             except mygeotab.exceptions.AuthenticationException:
                 st.error("Authentication failed!")
         else:
-            st.error("Please enter a vehicle ID.")
+            st.error("Please enter the four digit Bus ID.")
 
 # Show the appropriate tab content
 if st.session_state['current_tab']:
