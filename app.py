@@ -114,7 +114,7 @@ def switch_to_nearest_tab():
             st.warning("You are not within any defined bus yard boundaries.")
 
 # Enable or disable automatic tab switching
-enable_auto_switch = False  # Set to False to disable
+enable_auto_switch = True  # Set to False to disable
 
 if enable_auto_switch:
     switch_to_nearest_tab()
