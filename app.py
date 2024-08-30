@@ -21,6 +21,20 @@ if 'current_tab' not in st.session_state:
 mapbox_token = "pk.eyJ1IjoidnIwMG4tbnljc2J1cyIsImEiOiJjbDB5cHhoeHgxcmEyM2ptdXVkczk1M2xlIn0.qq6o-6TMurwke-t1eyetBw"
 mapbox_style = "mapbox://styles/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn"
 
+# Function to authenticate with Geotab and get devices
+@st.cache_data(show_spinner=False)
+def authenticate_geotab():
+    database = 'nycsbus'
+    server = 'afmfe.att.com'
+    geotab_username = st.secrets["geotab_username"]
+    geotab_password = st.secrets["geotab_password"]
+    api = mygeotab.API(username=geotab_username, password=geotab_password, database=database, server=server)
+    api.authenticate()
+    devices = api.get('Device')
+    df_id = pd.json_normalize(devices)[['name', 'id']]
+    df_id.columns = ["Vehicle", "ID"]
+    return df_id
+
 # Load and display the logo
 logo_path = "nycsbus-small-logo.png"
 
@@ -41,10 +55,6 @@ def get_user_location():
     if location:
         st.session_state['user_lat'] = location['coords']['latitude']
         st.session_state['user_lon'] = location['coords']['longitude']
-        #st.write(f"Current location: ({st.session_state['user_lat']}, {st.session_state['user_lon']})")
-    else:
-        continue
-        #st.warning("Unable to get your location.")
 
 get_user_location()
 
@@ -122,34 +132,23 @@ def clean_vehicle_name(vehicle_name):
 # Function to display bus location on a map
 def display_bus_location():
     vehicle_name = st.text_input("Enter Vehicle ID", placeholder="Vehicle ID")
-    
+
     if st.button("Show Bus Location"):
         if vehicle_name:
             vehicle_name = clean_vehicle_name(vehicle_name)
-            
-            # Authentication with Geotab
-            database = 'nycsbus'
-            server = 'afmfe.att.com'
-            geotab_username = st.secrets["geotab_username"]
-            geotab_password = st.secrets["geotab_password"]
-            api = mygeotab.API(username=geotab_username, password=geotab_password, database=database, server=server)
 
+            df_id = authenticate_geotab()
+
+            # Look up the internal Geotab ID based on the vehicle name provided by the user
+            geotab_id = df_id[df_id['Vehicle'] == vehicle_name]['ID'].values
+            if len(geotab_id) == 0:
+                st.error(f"No Geotab ID found for vehicle '{vehicle_name}'.")
+                return
+            geotab_id = geotab_id[0]
+
+            # Query Geotab for the device status using the internal ID
+            api = mygeotab.API(username=st.secrets["geotab_username"], password=st.secrets["geotab_password"], database='nycsbus', server='afmfe.att.com')
             try:
-                api.authenticate()
-                
-                # Get all devices and map vehicle names to Geotab IDs
-                devices = api.get('Device')
-                df_id = pd.json_normalize(devices)[['name', 'id']]
-                df_id.columns = ["Vehicle", "ID"]
-                
-                # Look up the internal Geotab ID based on the vehicle name provided by the user
-                geotab_id = df_id[df_id['Vehicle'] == vehicle_name]['ID'].values
-                if len(geotab_id) == 0:
-                    st.error(f"No Geotab ID found for vehicle '{vehicle_name}'.")
-                    return
-                geotab_id = geotab_id[0]
-
-                # Query Geotab for the device status using the internal ID
                 device_statuses = api.get('DeviceStatusInfo', search={'deviceSearch': {'id': geotab_id}})
 
                 if device_statuses:
@@ -165,7 +164,7 @@ def display_bus_location():
                             is_within_bounds(bus_lat, bus_lon, conner_bounds) or
                             is_within_bounds(bus_lat, bus_lon, jamaica_bounds) or
                             is_within_bounds(bus_lat, bus_lon, richmond_terrace_bounds)):
-                            
+
                             # Center the map on the bus location
                             m = folium.Map(location=[bus_lat, bus_lon], zoom_start=19, tiles=f"https://api.mapbox.com/styles/v1/vr00n-nycsbus/cm0404e2900bj01qvc6c381fn/tiles/256/{{z}}/{{x}}/{{y}}@2x?access_token={mapbox_token}", attr="Mapbox")
 
