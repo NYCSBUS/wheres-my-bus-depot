@@ -38,7 +38,7 @@ logo_path = "nycsbus-small-logo.png"
 # Display the logo and the title at the top
 col1, col2 = st.columns([0.8, 0.2])
 with col1:
-    st.title("Where's the Bus (Depot)")
+    st.title("Where's my Bus (Depot)")
 with col2:
     st.logo(
     logo_path,
